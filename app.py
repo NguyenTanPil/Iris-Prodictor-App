@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 import numpy as np
 from sklearn import svm
@@ -28,6 +29,7 @@ def analyze():
         sepal_width = request.form['sepal_width']
         petal_length = request.form['petal_length']
         petal_width = request.form['petal_width']
+        model_choose = request.form['model_choose']
 
     input_data = [sepal_length, sepal_width, petal_length, petal_width]
 
@@ -37,26 +39,27 @@ def analyze():
     # filter data
     filter_data = np.array(format_data).reshape(1, -1)
 
-    prediction = svm_model(filter_data)
+    # Loading model
+    model_name = ''
+    if model_choose == 'knn':
+        model = joblib.load('data/knn_model.pkl')
+        model_name = 'KNN'
+    elif model_choose == 'naive_bayes':
+        model = joblib.load('data/naive_bayes_model.pkl')
+        model_name = 'Naive Bayes'
+    elif model_choose == 'decision_tree':
+        model = joblib.load('data/decision_tree_model.pkl')
+        model_name = 'Decision Tree'
+    else:
+        model = joblib.load('data/svm_model.pkl')
+        model_name = 'SVM'
+
+    prediction = model.predict(filter_data)
+
 
     # render template
     return render_template('index.html', sepal_length=sepal_length, sepal_width=sepal_width, petal_length=petal_length,
-                           petal_width=petal_width, input_data=format_data, prediction=prediction)
-
-
-def svm_model(value):
-    # read datasets and get X, y
-    data = pd.read_csv('data/iris.csv', delimiter=',')
-    X = data.iloc[:, 0:4]
-    y = data.variety
-
-    # building model
-    model = svm.SVC(kernel='rbf')
-    model.fit(X, y)
-
-    # result
-    prediction = model.predict(value)
-    return prediction
+                           petal_width=petal_width, input_data=format_data, model_name=model_name, prediction=prediction)
 
 
 if __name__ == '__main__':
